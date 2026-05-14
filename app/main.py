@@ -70,6 +70,7 @@ app = FastAPI(
         "建议只暴露白名单目录，不要直接把原始 Everything HTTP 地址交给 Dify。"
     ),
 )
+app.openapi_version = "3.0.3"
 
 
 def _build_full_path(path_value: str, name_value: str) -> str:
