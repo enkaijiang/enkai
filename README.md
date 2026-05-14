@@ -249,6 +249,72 @@ curl "http://127.0.0.1:8000/search?query=dify&count=5"
 
 ## 9. 导入 Dify Custom Tool
 
+### 9.0 结合你当前环境，先确定地址怎么填
+
+你现在给出的信息是：
+
+- `Dify` 部署目录在 `/root/dify`
+- `Dify` 访问 IP 是 `192.168.70.221`
+- `Dify` 对外端口是 `80`
+
+所以你进入 `Dify` 后台的地址，应该先按下面这个试：
+
+```text
+http://192.168.70.221
+```
+
+注意，这个地址是：
+
+**Dify 后台地址**
+
+不是：
+
+**Everything FastAPI Bridge 的地址**
+
+这两个地址不要混掉。
+
+#### 你现在要先判断一件事
+
+`FastAPI Bridge` 准备部署在哪里？
+
+有两种情况：
+
+##### 情况 1：`FastAPI Bridge` 也部署在这台 Dify 服务器上
+
+那你后面导入 `OpenAPI` 时，大概率填：
+
+```text
+http://192.168.70.221:8000/openapi.json
+```
+
+前提是：
+
+1. 你把 `FastAPI` 跑在这台机器上
+2. `8000` 端口已放通
+3. 没有被防火墙拦掉
+
+##### 情况 2：`FastAPI Bridge` 部署在另一台机器上
+
+那你后面导入 `OpenAPI` 时，不能填 `192.168.70.221`。
+
+而是要填：
+
+```text
+http://你的 FastAPI 机器 IP:8000/openapi.json
+```
+
+比如：
+
+```text
+http://192.168.70.230:8000/openapi.json
+```
+
+#### 这一点最关键
+
+`Dify` 在 `192.168.70.221:80`，只决定你从哪里登录 Dify 后台。
+
+它**不自动等于**你的 `OpenAPI` 地址。
+
 ### 9.1 方式一：直接导入运行中的 `OpenAPI`
 
 如果你的服务已启动，可直接把这个地址导入 `Dify`：
@@ -287,6 +353,12 @@ http://YOUR_FASTAPI_HOST:8000
 http://YOUR_FASTAPI_HOST:8000/openapi.json
 ```
 
+按你当前环境，如果 `FastAPI Bridge` 和 `Dify` 在同一台机器，先直接试：
+
+```text
+http://192.168.70.221:8000/openapi.json
+```
+
 如果浏览器能打开，继续下一步。
 
 如果打不开，先不要进 Dify。
@@ -301,6 +373,25 @@ http://YOUR_FASTAPI_HOST:8000/openapi.json
 #### 第 2 步：进入 Dify 工具页
 
 在 Dify 后台按下面顺序操作：
+
+1. 浏览器打开：
+
+```text
+http://192.168.70.221
+```
+
+2. 登录 Dify
+3. 进入工作区
+4. 在左侧菜单找到 `Tools`
+5. 进入工具页后，找到 `Custom Tool`
+
+如果你打开 `http://192.168.70.221` 进不去，再排查：
+
+1. `docker-compose` 里的 `nginx` 是否正常启动
+2. 服务器 `80` 端口是否放通
+3. 是否有内网 ACL 或安全组限制
+
+原来的操作顺序是：
 
 1. 登录 Dify
 2. 进入工作区
@@ -340,6 +431,14 @@ http://YOUR_FASTAPI_HOST:8000/openapi.json
 | 字段 | 填什么 |
 | --- | --- |
 | `Schema URL` / `OpenAPI URL` | `http://YOUR_FASTAPI_HOST:8000/openapi.json` |
+| 名称 | `Everything Search` |
+| 描述 | `搜索内部文件索引，返回文件名、路径、修改时间和大小` |
+
+如果你的 `FastAPI Bridge` 就跑在 `192.168.70.221` 这台机器上，可以直接填：
+
+| 字段 | 直接填这个 |
+| --- | --- |
+| `Schema URL` / `OpenAPI URL` | `http://192.168.70.221:8000/openapi.json` |
 | 名称 | `Everything Search` |
 | 描述 | `搜索内部文件索引，返回文件名、路径、修改时间和大小` |
 
@@ -493,6 +592,7 @@ searchFiles
 1. `http://YOUR_FASTAPI_HOST:8000/openapi.json` 能否从 Dify 所在网络访问
 2. `openapi.json` 是否返回 `200`
 3. 是否被网关、认证、证书拦截
+4. 如果你填的是 `http://192.168.70.221:8000/openapi.json`，确认这台机器上确实已经启动 `FastAPI Bridge`
 
 ##### 情况 B：导入成功，但调用时报错
 
@@ -526,6 +626,54 @@ http://everything-bridge.company.local/openapi.json
 
 4. `EVERYTHING_ALLOWED_ROOTS` 只放业务目录
 5. 不要让 Dify 直接访问 `Everything` 原始 HTTP 地址
+
+#### 结合你当前环境，我建议这样落地
+
+最简单的接法有两种：
+
+##### 方案 A：`FastAPI Bridge` 也放到 `192.168.70.221`
+
+你后面在 Dify 里导入：
+
+```text
+http://192.168.70.221:8000/openapi.json
+```
+
+优点：
+
+- 最好记
+- 最少改动
+- 不需要多记一台机器
+
+缺点：
+
+- 这台 Dify 服务器还要额外跑一个 `FastAPI` 服务
+
+##### 方案 B：`FastAPI Bridge` 放到独立机器
+
+你后面在 Dify 里导入：
+
+```text
+http://FastAPI_IP:8000/openapi.json
+```
+
+优点：
+
+- 和 Dify 解耦
+- 更方便单独维护
+
+缺点：
+
+- 需要额外打通网络
+
+#### 所以，原部署步骤需要更新的地方
+
+需要更新，但只是这 4 点：
+
+1. `Dify` 登录地址固定成 `http://192.168.70.221`
+2. `OpenAPI URL` 要按 `FastAPI` 实际部署位置填写
+3. 如果 `FastAPI` 部署在 Dify 同机，示例地址改成 `http://192.168.70.221:8000/openapi.json`
+4. 排障时要先分清“Dify 访问失败”还是“FastAPI / OpenAPI 访问失败”
 
 ### 9.4 在 Agent 中的提示词建议
 
