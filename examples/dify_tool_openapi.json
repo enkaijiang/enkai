@@ -1,0 +1,137 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Everything Dify Bridge",
+    "version": "1.0.0",
+    "description": "把 Everything HTTP 搜索能力包装成适合 Dify Custom Tool 调用的接口。"
+  },
+  "servers": [
+    {
+      "url": "http://YOUR_FASTAPI_HOST:8000"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "healthCheck",
+        "summary": "健康检查",
+        "parameters": [
+          {
+            "name": "check_upstream",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            },
+            "description": "是否探测 Everything 上游连通性"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "服务状态"
+          }
+        }
+      }
+    },
+    "/search": {
+      "get": {
+        "operationId": "searchFiles",
+        "summary": "搜索文件",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Everything 搜索词"
+          },
+          {
+            "name": "count",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 10
+            },
+            "description": "返回条数"
+          },
+          {
+            "name": "regex",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "是否开启正则"
+          },
+          {
+            "name": "case_sensitive",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "是否区分大小写"
+          },
+          {
+            "name": "whole_word",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "是否整词匹配"
+          },
+          {
+            "name": "path_match",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "是否按完整路径匹配"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "name",
+                "path",
+                "size",
+                "date_modified"
+              ],
+              "default": "name"
+            },
+            "description": "排序字段"
+          },
+          {
+            "name": "ascending",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            },
+            "description": "是否升序"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "搜索结果"
+          }
+        }
+      }
+    }
+  }
+}
